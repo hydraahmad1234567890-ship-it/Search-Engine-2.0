@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Next-Gen Search Engine | Beyond Search</title>
+    <!-- SEO -->
+    <meta name="description" content="A faster, more private, and AI-powered search engine aggregator. Integration with Brave, Wikipedia, GitHub, and more.">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#8b5cf6',
+                        dark: '#0f172a',
+                        card: 'rgba(30, 41, 59, 0.7)',
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Custom Styles -->
+    <style type="text/tailwindcss">
+        @layer components {
+            .glass {
+                background: var(--glass);
+                backdrop-filter: blur(12px) saturate(180%);
+                border: 1px solid var(--glass-border);
+            }
+            .tab-btn {
+                @apply text-gray-500 font-medium hover:text-primary transition-all duration-300;
+            }
+            .active-tab {
+                @apply bg-white dark:bg-slate-700 text-primary shadow-sm !important;
+            }
+            .result-card {
+                @apply transition-all duration-300 border border-transparent hover:border-primary/30 hover:shadow-xl hover:-translate-y-1;
+            }
+            .skeleton {
+                @apply bg-gray-200 dark:bg-slate-800 animate-pulse rounded;
+            }
+            .settings-input {
+                @apply bg-gray-100 dark:bg-slate-800 border-none focus:ring-2 focus:ring-primary outline-none;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+
+        body.search-focused main {
+            opacity: 0.3;
+            pointer-events: none;
+            filter: blur(4px);
+            transition: all 0.5s ease;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { @apply bg-gray-300 dark:bg-slate-700 rounded-full; }
+        ::-webkit-scrollbar-thumb:hover { @apply bg-gray-400 dark:bg-slate-600; }
+
+        .prose-ai { @apply leading-relaxed text-gray-700 dark:text-gray-300; }
+        .prose-ai h1, .prose-ai h2, .prose-ai h3 { @apply font-bold text-gray-900 dark:text-white mt-4 mb-2; }
+        .prose-ai p { @apply mb-4; }
+        .prose-ai code { @apply bg-gray-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-primary text-sm; }
+    </style>
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        .dark {
+            --glass: rgba(15, 23, 42, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+        body { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark text-gray-900 dark:text-gray-100 transition-colors duration-300 font-['Inter'] min-h-screen flex flex-col">
+
+    <!-- Header / Search Bar -->
+    <header id="header" class="fixed top-0 left-0 w-full z-40 transition-all duration-300 bg-transparent py-6">
+        <div class="container mx-auto px-4 max-w-4xl text-center">
+            <h1 id="brand" class="text-4xl md:text-5xl font-['Outfit'] font-bold mb-8 bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent transform transition-all duration-700">
+                Next-Gen Search
+            </h1>
+            
+            <div class="relative max-w-2xl mx-auto group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors"></i>
+                </div>
+                <input type="text" id="search-input" 
+                    class="w-full bg-white dark:bg-slate-800/80 backdrop-blur-md border border-gray-200 dark:border-slate-700 rounded-2xl py-4 pl-12 pr-16 text-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-lg transition-all duration-300 placeholder-gray-400 dark:placeholder-gray-500"
+                    placeholder="Search anything..."
+                    autocomplete="off">
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 space-x-2">
+                    <button id="voice-btn" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors text-gray-400 hover:text-primary" title="Voice Search">
+                        <i data-lucide="mic" class="w-5 h-5"></i>
+                    </button>
+                    <button id="search-btn" class="p-2 bg-primary hover:bg-blue-600 rounded-xl transition-all shadow-md active:scale-95 text-white">
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                
+                <!-- Autocomplete Dropdown -->
+                <div id="autocomplete-results" class="hidden absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-800/90 backdrop-blur-xl border border-gray-200 dark:border-slate-700 rounded-2xl shadow-2xl overflow-hidden z-50">
+                    <!-- Results dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Recent Searches Chips -->
+            <div id="recent-searches" class="flex flex-wrap justify-center gap-2 mt-4 opacity-0 transition-opacity duration-500">
+                <!-- Recent items inserted here -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="container mx-auto px-4 pt-64 pb-20 max-w-5xl flex-grow">
+        
+        <!-- Tabs -->
+        <div id="tabs-container" class="hidden sticky top-24 z-30 mb-8 flex justify-center">
+            <div class="inline-flex bg-gray-100/50 dark:bg-slate-800/50 backdrop-blur-lg border border-gray-200/50 dark:border-slate-700/50 p-1 rounded-2xl shadow-md">
+                <button data-tab="all" class="tab-btn px-4 py-2 rounded-xl transition-all active-tab">All</button>
+                <button data-tab="web" class="tab-btn px-4 py-2 rounded-xl transition-all">Web</button>
+                <button data-tab="code" class="tab-btn px-4 py-2 rounded-xl transition-all">Code</button>
+                <button data-tab="news" class="tab-btn px-4 py-2 rounded-xl transition-all">News</button>
+                <button data-tab="images" class="tab-btn px-4 py-2 rounded-xl transition-all">Images</button>
+                <button data-tab="bookmarks" class="tab-btn px-4 py-2 rounded-xl transition-all flex items-center gap-2">
+                    <i data-lucide="star" class="w-4 h-4"></i> Bookmarks
+                </button>
+            </div>
+        </div>
+
+        <!-- Meta Results (Count & Time) -->
+        <div id="results-meta" class="hidden flex justify-between items-center mb-6 text-sm text-gray-500 dark:text-gray-400 px-2">
+            <span id="result-stats"></span>
+            <div class="flex items-center gap-4">
+                <select id="sort-select" class="bg-transparent border-none focus:ring-0 cursor-pointer hover:text-primary transition-colors outline-none appearance-none">
+                    <option value="relevance" class="dark:bg-slate-900">Relevance</option>
+                    <option value="date" class="dark:bg-slate-900">Newest First</option>
+                    <option value="source" class="dark:bg-slate-900">Source</option>
+                </select>
+                <button id="export-btn" class="hover:text-primary transition-colors flex items-center gap-1">
+                    <i data-lucide="download" class="w-4 h-4"></i> Export
+                </button>
+            </div>
+        </div>
+
+        <!-- AI Summary Card -->
+        <div id="ai-summary-container" class="hidden mb-10 transform translate-y-4 opacity-0 transition-all duration-700">
+            <!-- AI Content dynamic -->
+        </div>
+
+        <!-- Results Grid -->
+        <div id="results-grid" class="flex flex-col gap-6">
+            <!-- Loader Skeletons (Initial hidden) -->
+            <div id="initial-state" class="text-center py-20 opacity-60">
+                <div class="mb-6 inline-block p-4 bg-primary/10 rounded-full">
+                    <i data-lucide="sparkles" class="w-12 h-12 text-primary animate-pulse"></i>
+                </div>
+                <h2 class="text-2xl font-semibold mb-2">Explore the Web Better</h2>
+                <p class="text-gray-500">Search with Brave, AI, and more in one place.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Side Overlays / Bookmarks -->
+    <aside id="bookmarks-sidebar" class="fixed right-0 top-0 h-screen w-80 bg-white dark:bg-dark border-l border-gray-200 dark:border-slate-800 shadow-2xl translate-x-full transition-transform duration-300 z-50 p-6 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold flex items-center gap-2">
+                <i data-lucide="star" class="w-5 h-5 text-yellow-400"></i> Bookmarks
+            </h3>
+            <button id="close-bookmarks" class="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div id="bookmarks-list" class="flex flex-col gap-4">
+            <!-- Bookmarked items -->
+            <p class="text-center text-gray-500 py-10">No bookmarks yet.</p>
+        </div>
+    </aside>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div id="settings-content" class="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden transition-all duration-300 scale-95 opacity-0">
+            <div class="p-6 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-800/50">
+                <h2 class="text-2xl font-bold font-['Outfit']">Preferences & Keys</h2>
+                <button id="close-settings" class="p-2 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-xl">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Search Engines</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Web Search (Serper.dev)</label>
+                            <input type="password" id="web-key" class="settings-input w-full p-3 rounded-xl" placeholder="Serper.dev key...">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">News Search (NewsAPI)</label>
+                            <input type="password" id="news-key" class="settings-input w-full p-3 rounded-xl" placeholder="NewsAPI key...">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400">AI Enhancement</h3>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">OpenAI API Key</label>
+                        <input type="password" id="openai-key" class="settings-input w-full p-3 rounded-xl" placeholder="Enter key for AI summary...">
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Enable AI Summaries</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="enable-ai" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-400">General</h3>
+                    <div class="flex items-center justify-between">
+                        <span>Safe Search</span>
+                        <select id="safe-search" class="bg-gray-100 dark:bg-slate-800 rounded-xl px-3 py-2 border-none">
+                            <option value="moderate" class="dark:bg-slate-900">Moderate</option>
+                            <option value="strict" class="dark:bg-slate-900">Strict</option>
+                            <option value="off" class="dark:bg-slate-900">Off</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Dark Mode</span>
+                        <button id="theme-toggle" class="p-2 bg-gray-100 dark:bg-slate-800 rounded-xl hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors">
+                            <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+                            <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-200 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-800/50 flex justify-end gap-4">
+                <button id="save-settings" class="bg-primary hover:bg-blue-600 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg shadow-primary/30 transition-all active:scale-95">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Menu (Bottom Right) -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-4">
+        <button id="bookmarks-btn-fab" class="p-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-xl hover:scale-110 active:scale-90 transition-all border border-gray-200 dark:border-slate-700" title="Bookmarks">
+            <i data-lucide="star" class="w-6 h-6 text-yellow-400"></i>
+        </button>
+        <button id="open-settings-fab" class="p-4 bg-primary text-white rounded-2xl shadow-xl hover:scale-110 active:scale-90 transition-all shadow-primary/20" title="Settings">
+            <i data-lucide="settings" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-10 text-center text-gray-400 text-sm">
+        <p>© 2026 Next-Gen Search Engine. Designed with ❤️ for privacy and speed.</p>
+        <div class="flex justify-center gap-6 mt-4">
+            <a href="#" class="hover:text-primary transition-colors">GitHub</a>
+            <a href="#" class="hover:text-primary transition-colors">Privacy</a>
+            <a href="#" class="hover:text-primary transition-colors">Documentation</a>
+        </div>
+    </footer>
+
+    <!-- Entry Point -->
+    <script type="module" src="src/js/app.js"></script>
+</body>
+</html>

@@ -2,9 +2,10 @@
  * Search Bar Logic (Autocomplete, History, Voice)
  */
 
-import { debounce, storage } from '../utils/helpers.js';
+window.App = window.App || {};
+window.App.components = window.App.components || {};
 
-export class SearchBar {
+window.App.components.SearchBar = class SearchBar {
     constructor(onSearch) {
         this.input = document.getElementById('search-input');
         this.btn = document.getElementById('search-btn');
@@ -17,26 +18,28 @@ export class SearchBar {
     }
 
     init() {
-        this.btn.addEventListener('click', () => this.triggerSearch());
-        this.input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') this.triggerSearch();
-        });
+        if (this.btn) this.btn.addEventListener('click', () => this.triggerSearch());
+        if (this.input) {
+            this.input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') this.triggerSearch();
+            });
 
-        // Autocomplete with debounce
-        this.input.addEventListener('input', debounce(() => this.fetchSuggestions(), 300));
+            // Autocomplete with debounce
+            this.input.addEventListener('input', window.App.utils.debounce(() => this.fetchSuggestions(), 300));
 
-        // Focus UI effects
-        this.input.addEventListener('focus', () => {
-            document.body.classList.add('search-focused');
-            this.showHistory();
-        });
+            // Focus UI effects
+            this.input.addEventListener('focus', () => {
+                document.body.classList.add('search-focused');
+                this.showHistory();
+            });
 
-        this.input.addEventListener('blur', () => {
-            setTimeout(() => {
-                document.body.classList.remove('search-focused');
-                this.autocompleteDiv.classList.add('hidden');
-            }, 200);
-        });
+            this.input.addEventListener('blur', () => {
+                setTimeout(() => {
+                    document.body.classList.remove('search-focused');
+                    if (this.autocompleteDiv) this.autocompleteDiv.classList.add('hidden');
+                }, 200);
+            });
+        }
 
         // Voice
         if (this.voiceBtn) {
@@ -55,7 +58,6 @@ export class SearchBar {
         }
 
         try {
-            // Using Brave's public autocomplete or similar
             const response = await fetch(`https://search.brave.com/api/suggest?q=${encodeURIComponent(query)}`);
             const data = await response.json();
             const suggestions = data[1] || [];
@@ -79,7 +81,7 @@ export class SearchBar {
         `).join('');
         
         this.autocompleteDiv.classList.remove('hidden');
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
 
         this.autocompleteDiv.querySelectorAll('.suggestion-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -90,23 +92,25 @@ export class SearchBar {
     }
 
     triggerSearch() {
+        if (!this.input) return;
         const query = this.input.value.trim();
         if (!query) return;
 
-        this.autocompleteDiv.classList.add('hidden');
+        if (this.autocompleteDiv) this.autocompleteDiv.classList.add('hidden');
         this.saveToHistory(query);
         this.onSearch(query);
     }
 
     saveToHistory(query) {
-        let history = storage.get('search_history') || [];
+        let history = window.App.utils.storage.get('search_history') || [];
         history = [query, ...history.filter(h => h !== query)].slice(0, 10);
-        storage.set('search_history', history);
+        window.App.utils.storage.set('search_history', history);
         this.showHistory();
     }
 
     showHistory() {
-        const history = storage.get('search_history') || [];
+        if (!this.recentDiv) return;
+        const history = window.App.utils.storage.get('search_history') || [];
         if (history.length === 0) {
             this.recentDiv.classList.add('opacity-0');
             return;
@@ -138,7 +142,7 @@ export class SearchBar {
         recognition.lang = 'en-US';
         recognition.start();
 
-        this.voiceBtn.classList.add('text-primary', 'animate-pulse');
+        if (this.voiceBtn) this.voiceBtn.classList.add('text-primary', 'animate-pulse');
 
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
@@ -147,7 +151,8 @@ export class SearchBar {
         };
 
         recognition.onend = () => {
-            this.voiceBtn.classList.remove('text-primary', 'animate-pulse');
+            if (this.voiceBtn) this.voiceBtn.classList.remove('text-primary', 'animate-pulse');
         };
     }
-}
+};
+

@@ -2,13 +2,13 @@
  * API Aggregator for Next-Gen Search Engine
  */
 
-import { storage } from '../utils/helpers.js';
+window.App = window.App || {};
+window.App.services = window.App.services || {};
 
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-export class SearchAPI {
+window.App.services.SearchAPI = class SearchAPI {
     constructor() {
         this.cache = new Map();
+        this.CACHE_TTL = 5 * 60 * 1000; // 5 minutes
     }
 
     async fetchAll(query) {
@@ -17,7 +17,7 @@ export class SearchAPI {
         if (cached) return cached;
 
         const results = await Promise.allSettled([
-            this.fetchWeb(query), // Renamed from fetchBrave to fetchWeb for flexibility
+            this.fetchWeb(query),
             this.fetchWiki(query),
             this.fetchGitHub(query),
             this.fetchReddit(query),
@@ -41,11 +41,10 @@ export class SearchAPI {
     }
 
     async fetchWeb(query) {
-        const key = storage.get('web-key'); // Changed from brave-key
+        const key = window.App.utils.storage.get('web-key');
         if (!key) return this.fetchFallback(query);
 
         try {
-            // Using Serper.dev as the primary web search provider
             const response = await fetch('https://google.serper.dev/search', {
                 method: 'POST',
                 headers: {
@@ -56,7 +55,6 @@ export class SearchAPI {
             });
             const data = await response.json();
             
-            // Normalize Serper.dev data to match our UI expectations
             return (data.organic || []).map(res => ({
                 title: res.title,
                 url: res.link,
@@ -70,7 +68,6 @@ export class SearchAPI {
     }
 
     async fetchFallback(query) {
-        // Informal DuckDuckGo search as a no-key fallback (limited)
         try {
             const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`);
             const data = await response.json();
@@ -137,13 +134,10 @@ export class SearchAPI {
     }
 
     async fetchNews(query) {
-        // Simple News provider (Google News RSS proxy or NewsAPI with warning)
         try {
-            // Using a public News API proxy or suggesting user to provide key
-            const apiKey = storage.get('news-key');
+            const apiKey = window.App.utils.storage.get('news-key');
             if (!apiKey) return [];
             
-            // NewsAPI often blocks localhost, recommending a proxy if needed
             const response = await fetch(`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`);
             const data = await response.json();
             return data.articles || [];
@@ -153,14 +147,15 @@ export class SearchAPI {
     }
 
     getCache(query) {
-        const cache = storage.get(`cache_${query.toLowerCase()}`);
-        if (cache && (Date.now() - cache.timestamp < CACHE_TTL)) {
+        const cache = window.App.utils.storage.get(`cache_${query.toLowerCase()}`);
+        if (cache && (Date.now() - cache.timestamp < this.CACHE_TTL)) {
             return cache;
         }
         return null;
     }
 
     setCache(query, data) {
-        storage.set(`cache_${query.toLowerCase()}`, data);
+        window.App.utils.storage.set(`cache_${query.toLowerCase()}`, data);
     }
-}
+};
+

@@ -2,12 +2,13 @@
  * AI Service for Search Result Summarization
  */
 
-import { storage } from '../utils/helpers.js';
+window.App = window.App || {};
+window.App.services = window.App.services || {};
 
-export class AIService {
+window.App.services.AIService = class AIService {
     async summarize(query, webResults) {
-        const apiKey = storage.get('openai-key');
-        const enabled = storage.get('enable-ai') !== false;
+        const apiKey = window.App.utils.storage.get('openai-key');
+        const enabled = window.App.utils.storage.get('enable-ai') !== false;
 
         if (!apiKey || !enabled || !webResults || webResults.length === 0) {
             return null;
@@ -56,4 +57,5 @@ export class AIService {
             return { error: 'Failed to generate AI summary.' };
         }
     }
-}
+};
+

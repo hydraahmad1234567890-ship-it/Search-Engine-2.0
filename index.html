@@ -290,7 +290,24 @@
         </div>
     </footer>
 
-    <!-- Entry Point -->
-    <script type="module" src="src/js/app.js"></script>
+    <!-- Application Scripts (Loaded as classic scripts for file:// compatibility) -->
+    <script src="src/js/utils/helpers.js"></script>
+    <script src="src/js/utils/shortcuts.js"></script>
+    <script src="src/js/services/api.js"></script>
+    <script src="src/js/services/ai_service.js"></script>
+    <script src="src/js/components/ui.js"></script>
+    <script src="src/js/components/search_bar.js"></script>
+    <script src="src/js/components/settings.js"></script>
+    <script src="src/js/app.js"></script>
+
+    <!-- Final Icon Initialization / Failsafe -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 </body>
 </html>
+

@@ -2,9 +2,10 @@
  * Settings and LocalStorage Management
  */
 
-import { storage } from '../utils/helpers.js';
+window.App = window.App || {};
+window.App.components = window.App.components || {};
 
-export class SettingsManager {
+window.App.components.SettingsManager = class SettingsManager {
     constructor() {
         this.modal = document.getElementById('settings-modal');
         this.content = document.getElementById('settings-content');
@@ -21,69 +22,86 @@ export class SettingsManager {
         const keys = ['web-key', 'openai-key', 'news-key'];
         keys.forEach(k => {
             const input = document.getElementById(k);
-            if (input) input.value = storage.get(k) || '';
+            if (input) input.value = window.App.utils.storage.get(k) || '';
         });
 
         const aiCheck = document.getElementById('enable-ai');
-        aiCheck.checked = storage.get('enable-ai') !== false;
+        if (aiCheck) aiCheck.checked = window.App.utils.storage.get('enable-ai') !== false;
 
         const safeSearch = document.getElementById('safe-search');
-        safeSearch.value = storage.get('safe-search') || 'moderate';
+        if (safeSearch) safeSearch.value = window.App.utils.storage.get('safe-search') || 'moderate';
 
         // Event Listeners
-        this.openBtn.addEventListener('click', () => this.open());
-        this.closeBtn.addEventListener('click', () => this.close());
-        this.saveBtn.addEventListener('click', () => this.save());
-        this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        if (this.openBtn) this.openBtn.addEventListener('click', () => this.open());
+        if (this.closeBtn) this.closeBtn.addEventListener('click', () => this.close());
+        if (this.saveBtn) this.saveBtn.addEventListener('click', () => this.save());
+        if (this.themeToggle) this.themeToggle.addEventListener('click', () => this.toggleTheme());
 
         // Close on escape
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !this.modal.classList.contains('hidden')) {
+            if (e.key === 'Escape' && this.modal && !this.modal.classList.contains('hidden')) {
                 this.close();
             }
         });
     }
 
     open() {
+        if (!this.modal || !this.content) return;
         this.modal.classList.remove('hidden');
         this.modal.classList.add('flex');
         setTimeout(() => {
-            this.content.classList.remove('scale-95', 'opacity-0');
+            if (this.content) this.content.classList.remove('scale-95', 'opacity-0');
         }, 10);
     }
 
     close() {
+        if (!this.modal || !this.content) return;
         this.content.classList.add('scale-95', 'opacity-0');
         setTimeout(() => {
-            this.modal.classList.add('hidden');
-            this.modal.classList.remove('flex');
+            if (this.modal) {
+                this.modal.classList.add('hidden');
+                this.modal.classList.remove('flex');
+            }
         }, 300);
     }
 
     save() {
         const keys = ['web-key', 'openai-key', 'news-key'];
         keys.forEach(k => {
-            const val = document.getElementById(k).value.trim();
-            storage.set(k, val);
+            const input = document.getElementById(k);
+            if (input) {
+                const val = input.value.trim();
+                window.App.utils.storage.set(k, val);
+            }
         });
 
-        storage.set('enable-ai', document.getElementById('enable-ai').checked);
-        storage.set('safe-search', document.getElementById('safe-search').value);
+        const aiCheck = document.getElementById('enable-ai');
+        if (aiCheck) window.App.utils.storage.set('enable-ai', aiCheck.checked);
+        
+        const safeSearch = document.getElementById('safe-search');
+        if (safeSearch) window.App.utils.storage.set('safe-search', safeSearch.value);
 
         // Flash save button success
-        const originalText = this.saveBtn.textContent;
-        this.saveBtn.textContent = 'Saved Successfully!';
-        this.saveBtn.classList.replace('bg-primary', 'bg-green-500');
-        
-        setTimeout(() => {
-            this.saveBtn.textContent = originalText;
-            this.saveBtn.classList.replace('bg-green-500', 'bg-primary');
+        if (this.saveBtn) {
+            const originalText = this.saveBtn.textContent;
+            this.saveBtn.textContent = 'Saved Successfully!';
+            this.saveBtn.classList.replace('bg-primary', 'bg-green-500');
+            
+            setTimeout(() => {
+                if (this.saveBtn) {
+                    this.saveBtn.textContent = originalText;
+                    this.saveBtn.classList.replace('bg-green-500', 'bg-primary');
+                }
+                this.close();
+            }, 1500);
+        } else {
             this.close();
-        }, 1500);
+        }
     }
 
     toggleTheme() {
         const isDark = document.documentElement.classList.toggle('dark');
-        storage.set('theme', isDark ? 'dark' : 'light');
+        window.App.utils.storage.set('theme', isDark ? 'dark' : 'light');
     }
-}
+};
+

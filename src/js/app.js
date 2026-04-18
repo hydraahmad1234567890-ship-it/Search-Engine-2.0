@@ -2,21 +2,18 @@
  * Main Application Assembly
  */
 
-import { SearchAPI } from './services/api.js';
-import { AIService } from './services/ai_service.js';
-import { UIRenderer } from './components/ui.js';
-import { SearchBar } from './components/search_bar.js';
-import { SettingsManager } from './components/settings.js';
-import { initShortcuts } from './utils/shortcuts.js';
-import { storage } from './utils/helpers.js';
+window.App = window.App || {};
 
-class App {
+window.App.Core = class App {
     constructor() {
-        this.api = new SearchAPI();
-        this.ai = new AIService();
-        this.ui = new UIRenderer();
-        this.settings = new SettingsManager();
-        this.searchBar = new SearchBar((q) => this.performSearch(q));
+        // Initialize Services
+        this.api = new window.App.services.SearchAPI();
+        this.ai = new window.App.services.AIService();
+        
+        // Initialize Components
+        this.ui = new window.App.components.UIRenderer();
+        this.settings = new window.App.components.SettingsManager();
+        this.searchBar = new window.App.components.SearchBar((q) => this.performSearch(q));
         
         this.currentResults = null;
         this.activeTab = 'all';
@@ -35,25 +32,26 @@ class App {
         const bookmarkSidebar = document.getElementById('bookmarks-sidebar');
         const closeBookmark = document.getElementById('close-bookmarks');
 
-        bookmarkBtn.addEventListener('click', () => bookmarkSidebar.classList.remove('translate-x-full'));
-        closeBookmark.addEventListener('click', () => bookmarkSidebar.classList.add('translate-x-full'));
+        if (bookmarkBtn) bookmarkBtn.addEventListener('click', () => bookmarkSidebar.classList.remove('translate-x-full'));
+        if (closeBookmark) closeBookmark.addEventListener('click', () => bookmarkSidebar.classList.add('translate-x-full'));
 
         // Keyboard shortcuts
-        initShortcuts({
+        window.App.utils.initShortcuts({
             focusSearch: () => this.searchBar.input.focus(),
             openSettings: () => this.settings.open(),
             clearSearch: () => {
                 this.searchBar.input.value = '';
                 this.ui.clear();
-                document.getElementById('tabs-container').classList.add('hidden');
+                const tabs = document.getElementById('tabs-container');
+                if (tabs) tabs.classList.add('hidden');
             }
         });
 
         // Initialize Lucide icons
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         
         // Initial Theme
-        const savedTheme = storage.get('theme');
+        const savedTheme = window.App.utils.storage.get('theme');
         if (savedTheme === 'light') document.documentElement.classList.remove('dark');
 
         // Check for deep links in URL
@@ -70,11 +68,19 @@ class App {
 
         // Reset UI
         this.ui.renderSkeleton();
-        document.getElementById('tabs-container').classList.remove('hidden');
-        document.getElementById('results-meta').classList.remove('hidden');
-        document.getElementById('brand').classList.add('scale-75', '-translate-y-10');
-        document.getElementById('header').classList.replace('py-6', 'py-2');
-        document.getElementById('header').classList.add('bg-white/80', 'dark:bg-slate-900/80', 'backdrop-blur-xl', 'border-b', 'border-gray-200', 'dark:border-slate-800');
+        
+        const tabs = document.getElementById('tabs-container');
+        const meta = document.getElementById('results-meta');
+        const brand = document.getElementById('brand');
+        const header = document.getElementById('header');
+
+        if (tabs) tabs.classList.remove('hidden');
+        if (meta) meta.classList.remove('hidden');
+        if (brand) brand.classList.add('scale-75', '-translate-y-10');
+        if (header) {
+            header.classList.replace('py-6', 'py-2');
+            header.classList.add('bg-white/80', 'dark:bg-slate-900/80', 'backdrop-blur-xl', 'border-b', 'border-gray-200', 'dark:border-slate-800');
+        }
 
         const startTime = Date.now();
 
@@ -110,15 +116,12 @@ class App {
         // 1. Basic Calculator
         if (/^[\d+\-*/\s().]+$/.test(query) && /[\d]/.test(query)) {
             try {
+                // Use a safe eval alternative if possible, but for local simplicity:
                 const res = eval(query);
                 return this.createInstantCard('Calculator', `${query} = ${res}`, 'calculator');
             } catch(e) {}
         }
-        // 2. Unit conversion (Simple mock)
-        if (query.includes(' to ')) {
-            // Logic for unit conversion could go here
-        }
-        // 3. Weather mock
+        // 2. Weather mock
         if (query.toLowerCase().startsWith('weather in ')) {
             const city = query.split('weather in ')[1];
             return this.createInstantCard('Weather', `Current weather in ${city}: 22°C, Mostly Sunny.`, 'cloud-sun');
@@ -150,7 +153,7 @@ class App {
 
     renderActiveTab() {
         if (!this.currentResults) return;
-        this.ui.resultsGrid.innerHTML = '';
+        if (this.ui.resultsGrid) this.ui.resultsGrid.innerHTML = '';
         
         const r = this.currentResults;
         switch (this.activeTab) {
@@ -196,28 +199,29 @@ class App {
                 btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
                 setTimeout(() => {
                     btn.innerHTML = '<i data-lucide="share-2" class="w-4 h-4"></i>';
-                    lucide.createIcons();
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
                 }, 2000);
-                lucide.createIcons();
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             });
         });
     }
 
     toggleBookmark(data) {
-        let bookmarks = storage.get('bookmarks') || [];
+        let bookmarks = window.App.utils.storage.get('bookmarks') || [];
         const exists = bookmarks.find(b => b.url === data.url);
         if (exists) {
             bookmarks = bookmarks.filter(b => b.url !== data.url);
         } else {
             bookmarks.push({ title: data.title, url: data.url, date: Date.now() });
         }
-        storage.set('bookmarks', bookmarks);
+        window.App.utils.storage.set('bookmarks', bookmarks);
         this.updateBookmarkList();
     }
 
     updateBookmarkList() {
         const list = document.getElementById('bookmarks-list');
-        const bookmarks = storage.get('bookmarks') || [];
+        if (!list) return;
+        const bookmarks = window.App.utils.storage.get('bookmarks') || [];
         if (bookmarks.length === 0) {
             list.innerHTML = '<p class="text-center text-gray-500 py-10">No bookmarks yet.</p>';
             return;
@@ -231,18 +235,19 @@ class App {
     }
 
     renderBookmarks() {
-        const bookmarks = storage.get('bookmarks') || [];
+        const bookmarks = window.App.utils.storage.get('bookmarks') || [];
         if (bookmarks.length === 0) {
             this.ui.resultsGrid.innerHTML = this.ui.renderEmpty('bookmarks');
             return;
         }
-        // Transform bookmarks to look like web results for rendering
         const mockResults = bookmarks.map(b => ({ title: b.title, url: b.url, description: 'Saved from your search history.' }));
         this.ui.renderWebResults(mockResults);
     }
-}
+};
 
 // Start the App
 window.addEventListener('DOMContentLoaded', () => {
-    window.app = new App();
+    window.appInstance = new window.App.Core();
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 });
+

@@ -2,9 +2,10 @@
  * UI Components and Rendering for Next-Gen Search Engine
  */
 
-import { getFavicon, truncateUrl, formatDate, sanitize } from '../utils/helpers.js';
+window.App = window.App || {};
+window.App.components = window.App.components || {};
 
-export class UIRenderer {
+window.App.components.UIRenderer = class UIRenderer {
     constructor() {
         this.resultsGrid = document.getElementById('results-grid');
         this.aiContainer = document.getElementById('ai-summary-container');
@@ -12,10 +13,12 @@ export class UIRenderer {
     }
 
     clear() {
-        this.resultsGrid.innerHTML = '';
-        this.aiContainer.classList.add('hidden');
-        this.aiContainer.innerHTML = '';
-        this.statsContainer.textContent = '';
+        if (this.resultsGrid) this.resultsGrid.innerHTML = '';
+        if (this.aiContainer) {
+            this.aiContainer.classList.add('hidden');
+            this.aiContainer.innerHTML = '';
+        }
+        if (this.statsContainer) this.statsContainer.textContent = '';
     }
 
     renderSkeleton() {
@@ -51,14 +54,14 @@ export class UIRenderer {
                     <h3 class="text-xl font-bold font-['Outfit']">AI Answer</h3>
                 </div>
                 <div class="prose-ai mb-6">
-                    ${summary.error ? `<p class="text-red-500">${summary.error}</p>` : marked.parse(summary.text)}
+                    ${summary.error ? `<p class="text-red-500">${summary.error}</p>` : (typeof marked !== 'undefined' ? marked.parse(summary.text) : summary.text)}
                 </div>
                 ${summary.sources ? `
                 <div class="flex flex-wrap gap-2 pt-4 border-t border-gray-200 dark:border-slate-700">
                     <span class="text-xs font-semibold text-gray-400 uppercase tracking-widest w-full mb-2">Sources</span>
                     ${summary.sources.map((s, i) => `
                         <a href="${s.url}" target="_blank" class="flex items-center gap-2 px-3 py-1.5 bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 rounded-full text-xs transition-colors border border-gray-100 dark:border-slate-700">
-                            <img src="${getFavicon(s.url)}" class="w-3 h-3 rounded-sm" />
+                            <img src="${window.App.utils.getFavicon(s.url)}" class="w-3 h-3 rounded-sm" />
                             <span class="truncate max-w-[120px]">${s.title}</span>
                         </a>
                     `).join('')}
@@ -76,7 +79,7 @@ export class UIRenderer {
                 </div>
             </div>
         `;
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         setTimeout(() => {
             this.aiContainer.classList.remove('opacity-0', 'translate-y-4');
         }, 50);
@@ -93,8 +96,8 @@ export class UIRenderer {
                 <div class="result-card p-6 bg-white dark:bg-slate-800/80 backdrop-blur-md rounded-2xl border border-gray-100 dark:border-slate-700 animate-fade-in-up">
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex items-center gap-3 overflow-hidden">
-                            <img src="${getFavicon(res.url)}" class="w-5 h-5 rounded-sm" onerror="this.src='https://lucide.dev/icons/globe'"/>
-                            <span class="text-sm text-gray-500 truncate">${truncateUrl(res.url)}</span>
+                            <img src="${window.App.utils.getFavicon(res.url)}" class="w-5 h-5 rounded-sm" onerror="this.src='https://lucide.dev/icons/globe'"/>
+                            <span class="text-sm text-gray-500 truncate">${window.App.utils.truncateUrl(res.url)}</span>
                         </div>
                         <div class="flex gap-2">
                             <button class="bookmark-btn p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-gray-400" data-id="${res.url}" data-title="${res.title}" data-url="${res.url}">
@@ -113,7 +116,7 @@ export class UIRenderer {
             `;
             this.resultsGrid.innerHTML += card;
         });
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     renderWikiResult(wiki) {
@@ -140,7 +143,7 @@ export class UIRenderer {
             </div>
         `;
         this.resultsGrid.insertAdjacentHTML('afterbegin', card);
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     renderCodeResults(repos) {
@@ -163,7 +166,7 @@ export class UIRenderer {
                             <p class="text-xs text-gray-500 line-clamp-2">${repo.description || 'No description available.'}</p>
                             <div class="mt-3 flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-gray-400">
                                 <span>${repo.language || 'Code'}</span>
-                                <span>Updated: ${formatDate(repo.updated_at)}</span>
+                                <span>Updated: ${window.App.utils.formatDate(repo.updated_at)}</span>
                             </div>
                         </a>
                     `).join('')}
@@ -171,7 +174,7 @@ export class UIRenderer {
             </div>
         `;
         this.resultsGrid.innerHTML += section;
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     renderImageResults(images) {
@@ -195,7 +198,7 @@ export class UIRenderer {
             </div>
         `;
         this.resultsGrid.innerHTML += section;
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     renderNewsResults(articles) {
@@ -221,7 +224,7 @@ export class UIRenderer {
             </div>
         `;
         this.resultsGrid.innerHTML += section;
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     renderEmpty(type) {
@@ -235,6 +238,9 @@ export class UIRenderer {
     }
 
     updateStats(count, time) {
-        this.statsContainer.textContent = `About ${count} results found in ${(time / 1000).toFixed(2)}s`;
+        if (this.statsContainer) {
+            this.statsContainer.textContent = `About ${count} results found in ${(time / 1000).toFixed(2)}s`;
+        }
     }
-}
+};
+

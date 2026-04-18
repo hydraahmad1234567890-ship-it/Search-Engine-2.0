@@ -2,7 +2,10 @@
  * Keyboard Shortcuts Handler
  */
 
-export const initShortcuts = (actions) => {
+window.App = window.App || {};
+window.App.utils = window.App.utils || {};
+
+window.App.utils.initShortcuts = (actions) => {
     window.addEventListener('keydown', (e) => {
         // Search focus: /
         if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
@@ -25,3 +28,4 @@ export const initShortcuts = (actions) => {
         // TBD: Logic for selecting result cards
     });
 };
+

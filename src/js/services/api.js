@@ -87,11 +87,21 @@ window.App.services.SearchAPI = class SearchAPI {
 
     async fetchWiki(query) {
         try {
-            const response = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts|pageimages&exintro&explaintext&titles=${encodeURIComponent(query)}&pithumbsize=400`);
+            // Added redirects=1 to handle title variations and exact cases
+            const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts|pageimages&exintro&explaintext&redirects=1&titles=${encodeURIComponent(query)}&pithumbsize=400`;
+            const response = await fetch(url);
             const data = await response.json();
+            
+            if (!data.query || !data.query.pages) return null;
+            
             const pages = data.query.pages;
             const pageId = Object.keys(pages)[0];
-            if (pageId === '-1') return null;
+            
+            if (pageId === '-1') {
+                // Try a search fallback if exact title fails
+                return this.searchWiki(query);
+            }
+            
             return {
                 title: pages[pageId].title,
                 extract: pages[pageId].extract,
@@ -99,8 +109,22 @@ window.App.services.SearchAPI = class SearchAPI {
                 url: `https://en.wikipedia.org/wiki/${encodeURIComponent(pages[pageId].title)}`
             };
         } catch (e) {
+            console.warn('Wiki Fetch Error:', e);
             return null;
         }
+    }
+
+    async searchWiki(query) {
+        try {
+            const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`;
+            const res = await fetch(searchUrl);
+            const data = await res.json();
+            if (data.query.search.length > 0) {
+                // Re-fetch the first search result for details
+                return this.fetchWiki(data.query.search[0].title);
+            }
+        } catch (e) {}
+        return null;
     }
 
     async fetchGitHub(query) {
@@ -140,8 +164,15 @@ window.App.services.SearchAPI = class SearchAPI {
             
             const response = await fetch(`https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`);
             const data = await response.json();
+            
+            if (data.status === 'error' && data.code === 'corsNotAllowed') {
+                console.warn('NewsAPI: CORS not allowed on this domain (GitHub Pages limitation).');
+                return [];
+            }
+            
             return data.articles || [];
         } catch (e) {
+            console.error('News Search Error:', e);
             return [];
         }
     }

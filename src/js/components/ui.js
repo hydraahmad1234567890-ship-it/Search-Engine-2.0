@@ -124,7 +124,7 @@ window.App.components.UIRenderer = class UIRenderer {
     renderWikiResult(wiki) {
         if (!wiki) return;
         const card = `
-            <div class="p-8 bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl relative overflow-hidden group mb-6">
+            <div class="wiki-card p-8 bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl relative overflow-hidden group mb-6 transition-all duration-300">
                 <div class="absolute -right-10 -top-10 w-40 h-40 bg-primary/20 blur-3xl rounded-full"></div>
                 <div class="relative z-10">
                     <div class="flex items-center gap-3 mb-4">
@@ -158,7 +158,7 @@ window.App.components.UIRenderer = class UIRenderer {
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     ${repos.map(repo => `
-                        <a href="${repo.html_url}" target="_blank" class="p-4 bg-white dark:bg-slate-800/40 border border-gray-100 dark:border-slate-700 rounded-2xl hover:border-primary/50 transition-all group">
+                        <a href="${repo.html_url}" target="_blank" class="github-repo-card p-4 bg-white dark:bg-slate-800/40 border border-gray-100 dark:border-slate-700 rounded-2xl hover:border-primary/50 transition-all group">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="font-bold text-gray-900 dark:text-gray-100 group-hover:text-primary transition-colors">${repo.name}</span>
                                 <div class="flex items-center gap-2 text-xs text-gray-500">
@@ -213,7 +213,7 @@ window.App.components.UIRenderer = class UIRenderer {
                 </h3>
                 <div class="space-y-4">
                     ${articles.map(art => `
-                        <a href="${art.url}" target="_blank" class="flex flex-col md:flex-row gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 hover:shadow-lg transition-all">
+                        <a href="${art.url}" target="_blank" class="news-card flex flex-col md:flex-row gap-4 p-4 bg-white dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 hover:shadow-lg transition-all">
                             ${art.urlToImage ? `<img src="${art.urlToImage}" class="w-full md:w-32 h-24 object-cover rounded-xl" />` : ''}
                             <div class="flex-grow">
                                 <div class="text-xs text-primary font-bold uppercase tracking-wider mb-1">${art.source.name}</div>

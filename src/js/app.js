@@ -39,6 +39,7 @@ window.App.Core = class App {
         window.App.utils.initShortcuts({
             focusSearch: () => this.searchBar.input.focus(),
             openSettings: () => this.settings.open(),
+            closeSettings: () => this.settings.close(),
             clearSearch: () => {
                 this.searchBar.input.value = '';
                 this.ui.clear();

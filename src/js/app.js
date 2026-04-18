@@ -54,12 +54,16 @@ window.App.Core = class App {
         const savedTheme = window.App.utils.storage.get('theme');
         if (savedTheme === 'light') document.documentElement.classList.remove('dark');
 
-        // Check for deep links in URL
-        const urlParams = new URL(window.location.search);
-        const query = urlParams.get('q');
-        if (query) {
-            this.searchBar.input.value = query;
-            this.performSearch(query);
+        // Check for deep links in URL (Safely)
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const query = urlParams.get('q');
+            if (query) {
+                this.searchBar.input.value = query;
+                this.performSearch(query);
+            }
+        } catch (e) {
+            console.warn('App: Deep link parsing failed:', e);
         }
     }
 

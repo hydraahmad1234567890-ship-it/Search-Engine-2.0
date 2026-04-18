@@ -245,9 +245,21 @@ window.App.Core = class App {
     }
 };
 
-// Start the App
-window.addEventListener('DOMContentLoaded', () => {
-    window.appInstance = new window.App.Core();
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-});
+// Start the App Safely
+function startApp() {
+    try {
+        console.log('Initializing Next-Gen Search Engine...');
+        window.appInstance = new window.App.Core();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        console.log('App initialized successfully.');
+    } catch (e) {
+        console.error('Next-Gen Search Engine failed to initialize:', e);
+    }
+}
+
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', startApp);
+} else {
+    startApp();
+}
 

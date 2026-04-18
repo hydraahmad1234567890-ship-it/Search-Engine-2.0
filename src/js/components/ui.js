@@ -10,6 +10,8 @@ window.App.components.UIRenderer = class UIRenderer {
         this.resultsGrid = document.getElementById('results-grid');
         this.aiContainer = document.getElementById('ai-summary-container');
         this.statsContainer = document.getElementById('result-stats');
+        
+        if (!this.resultsGrid) console.warn('UIRenderer: results-grid element not found.');
     }
 
     clear() {

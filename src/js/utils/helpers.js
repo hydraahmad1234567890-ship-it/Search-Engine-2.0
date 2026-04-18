@@ -3,12 +3,13 @@
  */
 
 window.App = window.App || {};
-window.App.utils = {
+window.App.utils = Object.assign(window.App.utils || {}, {
     debounce: (func, wait) => {
         let timeout;
-        return (...args) => {
+        return function(...args) {
+            const context = this;
             clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
+            timeout = setTimeout(() => func.apply(context, args), wait);
         };
     },
 
@@ -80,5 +81,5 @@ window.App.utils = {
             window.history.pushState({}, '', url);
         }
     }
-};
+});
 
